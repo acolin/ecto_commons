@@ -108,14 +108,14 @@ defmodule EctoCommons.DateTimeValidator do
   def validate_datetime(changeset, field, opts \\ []) do
     validate_change(changeset, field, {:datetime, opts}, fn
       _, value ->
-        is = get_validation_value(opts[:is])
-        afterr = get_validation_value(opts[:after])
-        before = get_validation_value(opts[:before])
+        is = get_validation_value(changeset, opts[:is])
+        afterr = get_validation_value(changeset, opts[:after])
+        before = get_validation_value(changeset, opts[:before])
 
         error =
           (is && wrong_datetime(value, is, opts[:delta], opts)) ||
             (afterr && too_soon(value, afterr, opts)) ||
-            (before && too_late(value, before, opts))
+              (before && too_late(value, before, opts))
 
         if error, do: [{field, error}], else: []
     end)
@@ -164,9 +164,13 @@ defmodule EctoCommons.DateTimeValidator do
     end
   end
 
-  defp get_validation_value(nil), do: nil
-  defp get_validation_value(:utc_now), do: DateTime.utc_now()
-  defp get_validation_value(%DateTime{} = val), do: val
+  defp get_validation_value(_, nil), do: nil
+  defp get_validation_value(_, :utc_now), do: DateTime.utc_now()
+  defp get_validation_value(_, %DateTime{} = val), do: val
+  defp get_validation_value(changeset, field) do
+    val = get_field(changeset, field)
+    get_validation_value(changeset, val)
+  end
 
   defp message(opts, key \\ :message, default) do
     Keyword.get(opts, key, default)

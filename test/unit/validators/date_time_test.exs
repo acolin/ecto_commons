@@ -30,6 +30,33 @@ defmodule EctoCommons.DateTimeValidatorTest do
     end
   end
 
+  test "validate_datetime with :field_name is before with valid dates" do
+    types = %{valid_from: :utc_datetime, valid_to: :utc_datetime}
+    params = %{valid_from: ~U[2016-05-24 14:00:00Z], valid_to: ~U[2016-05-24 15:00:00Z]}
+
+    result =
+      Ecto.Changeset.cast({%{}, types}, params, Map.keys(types))
+      |> validate_datetime(:valid_from,
+        before: :valid_to
+      )
+
+    assert result.errors == []
+  end
+
+  test "validate_datetime with :field_name is before with invalid dates" do
+    types = %{valid_from: :utc_datetime, valid_to: :utc_datetime}
+    params = %{valid_from: ~U[2016-05-24 14:00:00Z], valid_to: ~U[2016-04-24 15:00:00Z]}
+
+    result =
+      Ecto.Changeset.cast({%{}, types}, params, Map.keys(types))
+      |> validate_datetime(:valid_from,
+        before: :valid_to
+      )
+
+    assert [valid_from: {"should be before %{before}.", [validation: :datetime, kind: :before]}] ==
+      result.errors
+  end
+
   @parameters_after [
     # Happy path
     {~U[2016-05-24 16:00:00Z], ~U[2016-05-24 15:00:00Z], []},
@@ -69,5 +96,32 @@ defmodule EctoCommons.DateTimeValidatorTest do
 
     assert [{:birthdate, {"should be after %{after}.", [validation: :datetime, kind: :after]}}] ==
              result.errors
+  end
+
+  test "validate_datetime with :field_name is after with valid dates" do
+    types = %{valid_from: :utc_datetime, valid_to: :utc_datetime}
+    params = %{valid_from: ~U[2016-05-24 14:00:00Z], valid_to: ~U[2016-05-24 15:00:00Z]}
+
+    result =
+      Ecto.Changeset.cast({%{}, types}, params, Map.keys(types))
+      |> validate_datetime(:valid_to,
+        after: :valid_from
+      )
+
+    assert result.errors == []
+  end
+
+  test "validate_datetime with :field_name is after with invalid dates" do
+    types = %{valid_from: :utc_datetime, valid_to: :utc_datetime}
+    params = %{valid_from: ~U[2016-05-24 14:00:00Z], valid_to: ~U[2016-04-24 15:00:00Z]}
+
+    result =
+      Ecto.Changeset.cast({%{}, types}, params, Map.keys(types))
+      |> validate_datetime(:valid_to,
+        after: :valid_from
+      )
+
+    assert [valid_to: {"should be after %{after}.", [validation: :datetime, kind: :after]}] ==
+      result.errors
   end
 end
