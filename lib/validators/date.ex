@@ -108,9 +108,9 @@ defmodule EctoCommons.DateValidator do
   def validate_date(changeset, field, opts \\ []) do
     validate_change(changeset, field, {:datetime, opts}, fn
       _, value ->
-        is = get_validation_value(opts[:is])
-        afterr = get_validation_value(opts[:after])
-        before = get_validation_value(opts[:before])
+        is = get_validation_value(changeset, opts[:is])
+        afterr = get_validation_value(changeset, opts[:after])
+        before = get_validation_value(changeset, opts[:before])
 
         error =
           (is && wrong_date(value, is, opts[:delta], opts)) ||
@@ -164,9 +164,13 @@ defmodule EctoCommons.DateValidator do
     end
   end
 
-  defp get_validation_value(nil), do: nil
-  defp get_validation_value(:utc_today), do: Date.utc_today()
-  defp get_validation_value(%Date{} = val), do: val
+  defp get_validation_value(_, nil), do: nil
+  defp get_validation_value(_, :utc_today), do: Date.utc_today()
+  defp get_validation_value(_,%Date{} = val), do: val
+  defp get_validation_value(changeset, field) do
+    val = get_field(changeset, field)
+    get_validation_value(changeset, val)
+  end
 
   defp message(opts, key \\ :message, default) do
     Keyword.get(opts, key, default)
